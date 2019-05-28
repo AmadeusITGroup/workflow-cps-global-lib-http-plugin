@@ -2,6 +2,7 @@
 
 [![Build Status](https://travis-ci.com/AmadeusITGroup/workflow-cps-global-lib-http-plugin.svg?branch=master)](https://travis-ci.org/AmadeusITGroup/workflow-cps-global-lib-http-plugin)
 [![codecov](https://codecov.io/gh/AmadeusITGroup/workflow-cps-global-lib-http-plugin/branch/master/graph/badge.svg)](https://codecov.io/gh/AmadeusITGroup/workflow-cps-global-lib-http-plugin)
+[![Join the chat at https://gitter.im/AmadeusITGroup/workflow-cps-global-lib-http-plugin](https://badges.gitter.im/AmadeusITGroup/workflow-cps-global-lib-http-plugin.svg)](https://gitter.im/AmadeusITGroup/workflow-cps-global-lib-http-plugin?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 The current official plugin [workflow-cps-global-lib](https://github.com/jenkinsci/workflow-cps-global-lib-plugin/) does provide a way to retrieve shared libraries through a SCM, such as Git. The goal of this plugin is to provide another way to retrieve shared libraries via the @Library declaration in a Jenkinsfile.
 
