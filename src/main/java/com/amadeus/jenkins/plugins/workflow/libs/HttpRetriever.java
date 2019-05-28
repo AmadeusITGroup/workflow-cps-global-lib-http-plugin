@@ -68,7 +68,6 @@ public class HttpRetriever extends LibraryRetriever {
 
     /**
      * The template of the URL where to retrieve a zip of the library
-     * Can't make it final or CasC will complain
      * <p>
      * Replaces the pattern ${library.NAME.version} in the URL (if found in the
      * shared library URL) either by the default version specified in the admin
