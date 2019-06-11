@@ -73,7 +73,7 @@ public class HttpRetriever extends LibraryRetriever {
      * shared library URL) either by the default version specified in the admin
      * configuration page or by the user in the Jenkinsfile @Library call.
      */
-    private final String url;
+    private final String httpURL;
 
     /**
      * Name of the credential to use if we need authentication to download the library archive
@@ -84,13 +84,13 @@ public class HttpRetriever extends LibraryRetriever {
     /**
      * Constructor used for JUnits
      *
-     * @param url       URL template where the library can be downloaded
+     * @param httpURL       URL template where the library can be downloaded
      * @param credentialsId The credentials ID that can be used to do an authenticated download
      * @param jenkins       The representation of the Jenkins server
      */
     @VisibleForTesting
-    HttpRetriever(String url, String credentialsId, Node jenkins) {
-        this.url = url;
+    HttpRetriever(String httpURL, String credentialsId, Node jenkins) {
+        this.httpURL = httpURL;
         this.credentialsId = credentialsId;
         this.jenkins = jenkins;
     }
@@ -98,12 +98,12 @@ public class HttpRetriever extends LibraryRetriever {
     /**
      * Constructor
      *
-     * @param url       URL template where the library can be downloaded
+     * @param httpURL       URL template where the library can be downloaded
      * @param credentialsId The credentials ID that can be used to do an authenticated download
      */
     @DataBoundConstructor
-    public HttpRetriever(@Nonnull String url, @Nonnull String credentialsId) {
-        this.url = url;
+    public HttpRetriever(@Nonnull String httpURL, @Nonnull String credentialsId) {
+        this.httpURL = httpURL;
         this.credentialsId = credentialsId;
         this.jenkins = Jenkins.get();
     }
@@ -113,8 +113,8 @@ public class HttpRetriever extends LibraryRetriever {
      *
      * @return URL template where the library can be downloaded
      */
-    public String getUrl() {
-        return this.url;
+    public String getHttpURL() {
+        return this.httpURL;
     }
 
     /**
@@ -164,7 +164,7 @@ public class HttpRetriever extends LibraryRetriever {
                          @Nonnull FilePath target, @Nonnull Run<?, ?> run, @Nonnull TaskListener listener)
             throws Exception {
 
-        String httpUrl = getUrl();
+        String httpUrl = getHttpURL();
         if (httpUrl == null) {
             return;
         }
@@ -300,7 +300,7 @@ public class HttpRetriever extends LibraryRetriever {
      */
     @Override
     public FormValidation validateVersion(@Nonnull String name, @Nonnull String version) {
-        String replacedVersionURL = convertURLVersion(url, name, version);
+        String replacedVersionURL = convertURLVersion(httpURL, name, version);
 
         try {
             URL newURL = new URL(replacedVersionURL);

@@ -28,7 +28,7 @@ public class ConfigurationAsCodeTest {
     LibraryRetriever retriever = testLibrary.getRetriever();
     assertThat(retriever).isInstanceOf(HttpRetriever.class);
     HttpRetriever httpRetriever = (HttpRetriever) retriever;
-    assertThat(httpRetriever.getUrl()).isEqualTo("http://example.org/123");
+    assertThat(httpRetriever.getHttpURL()).isEqualTo("http://example.org/123");
     assertThat(httpRetriever.getCredentialsId()).isEqualTo("someCredentials");
   }
 

@@ -4,5 +4,5 @@ unclassified:
       - name: "awesome-lib"
         retriever:
           http:
-            url: http://example.org/123
+            httpURL: http://example.org/123
             credentialsId: someCredentials

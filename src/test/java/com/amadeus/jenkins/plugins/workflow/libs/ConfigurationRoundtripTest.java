@@ -45,7 +45,7 @@ public class ConfigurationRoundtripTest {
     assertThat(testLib.getName()).isEqualTo("foo");
     assertThat(testLib.getRetriever()).isExactlyInstanceOf(HttpRetriever.class);
     HttpRetriever retriever = (HttpRetriever) testLib.getRetriever();
-    assertThat(retriever.getUrl()).isEqualTo("http://example.com/");
+    assertThat(retriever.getHttpURL()).isEqualTo("http://example.com/");
     assertThat(retriever.getCredentialsId())
       .isNotNull()
       .isEqualTo(credentials.getId());
