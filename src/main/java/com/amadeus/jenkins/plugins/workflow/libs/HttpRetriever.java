@@ -239,6 +239,10 @@ public class HttpRetriever extends LibraryRetriever {
             HttpClientContext context = getHttpClientContext(passwordCredentials);
             HttpGet get = new HttpGet(new URL(sourceURL).toURI());
             try (CloseableHttpResponse response = client.execute(get, context)) {
+                int statusCode = response.getStatusLine().getStatusCode();
+                if(statusCode != HttpStatus.SC_OK){
+                    throw new IOException("Failed to download " + sourceURL + ". Returned code: " + statusCode);
+                }
                 HttpEntity entity = response.getEntity();
                 try (InputStream inputStream = entity.getContent()) {
                     String wholeFilenameWithTargetPath = lease.path.child(zipFileName).getRemote();
@@ -262,7 +266,7 @@ public class HttpRetriever extends LibraryRetriever {
     private FilePath getDownloadFolder(String name, Run<?, ?> run) throws IOException {
         FilePath dir;
         if (run.getParent() instanceof TopLevelItem) {
-            FilePath baseWorkspace = jenkins.getWorkspaceFor((TopLevelItem) run.getParent());
+            FilePath baseWorkspace = jenkins.getWorkspaceFor((TopLevelItem)run.getParent());
             if (baseWorkspace == null) {
                 throw new IOException(jenkins.getDisplayName() + " may be offline");
             }
@@ -308,13 +312,7 @@ public class HttpRetriever extends LibraryRetriever {
 
             switch (checkURL(newURL)) {
                 case HttpStatus.SC_OK:
-                    if (isSecure(newURL)) {
-                        return FormValidation.ok("Version " + version + " is valid.");
-                    } else {
-                        return FormValidation.warning("Version " + version + " is valid. " +
-                                "But the protocol your are using might be insecure... " +
-                                "Consider switching to HTTPS, particularly if you are using Credentials.");
-                    }
+                    return validateVersionIfCheckIsOk(newURL, version);
                 case HttpStatus.SC_UNAUTHORIZED:
                     return FormValidation
                       .warning("You are not authorized to access to this URL...");
@@ -326,6 +324,16 @@ public class HttpRetriever extends LibraryRetriever {
         }
     }
 
+    private FormValidation validateVersionIfCheckIsOk(URL url, String version) {
+        String valid = "Version " + version + " is valid.";
+        if (isSecure(url)) {
+            return FormValidation.ok(valid);
+        } else {
+            return FormValidation.warning(valid + " But the protocol is insecure... "
+                + "Consider switching to HTTPS, particularly if you are using Credentials.");
+        }
+    }
+
     boolean isSecure(URL url) {
         return HTTPS_PROTOCOL.equals(url.getProtocol());
     }
@@ -334,7 +342,8 @@ public class HttpRetriever extends LibraryRetriever {
         try (InputStream inputStream = filePath.child("version.txt").read()) {
             return IOUtils.toString(inputStream);
         } catch (FileNotFoundException | NoSuchFileException e) {
-            Logger.getLogger(HttpRetriever.class.getName()).log(Level.FINER,"version.txt not found in the archive.", e);
+            Logger.getLogger(HttpRetriever.class.getName())
+                .log(Level.FINER,"version.txt not found in the archive.", e);
             return null;
         }
 

@@ -25,6 +25,7 @@ import org.jvnet.hudson.test.JenkinsRule;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.Objects;
 import java.util.function.Function;
@@ -54,6 +55,20 @@ public class HttpRetrieverIntegrationTests {
 
     @Test
     public void retrieves() throws Exception {
+        FilePath target = buildJobWithLibrary(
+                "http-lib-retriever-tests.zip",
+                "1.0"
+        );
+        Assert.assertTrue(target.child("version.txt").exists());
+        Assert.assertTrue(target.child("src").exists());
+        Assert.assertTrue(target.child("vars").exists());
+        Assert.assertTrue(target.child("resources").exists());
+    }
+
+    @Test(expected = AssertionError.class)
+    public void retrievesRejectedWithoutCredentials() throws Exception {
+        ExtensionList.lookupSingleton(SystemCredentialsProvider.class).getCredentials().remove(credentials);
+
         FilePath target = buildJobWithLibrary(
                 "http-lib-retriever-tests.zip",
                 "1.0"
