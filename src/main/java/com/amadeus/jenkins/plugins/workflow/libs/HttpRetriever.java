@@ -65,6 +65,7 @@ import java.util.regex.Pattern;
 @Restricted(NoExternalUse.class)
 public class HttpRetriever extends LibraryRetriever {
 
+    private static final String HTTPS_PROTOCOL = "https";
 
     /**
      * The template of the URL where to retrieve a zip of the library
@@ -307,7 +308,13 @@ public class HttpRetriever extends LibraryRetriever {
 
             switch (checkURL(newURL)) {
                 case HttpStatus.SC_OK:
-                    return FormValidation.ok("Version " + version + " is valid.");
+                    if (isSecure(newURL)) {
+                        return FormValidation.ok("Version " + version + " is valid.");
+                    } else {
+                        return FormValidation.warning("Version " + version + " is valid. " +
+                                "But the protocol your are using might be insecure... " +
+                                "Consider switching to HTTPS, particularly if you are using Credentials.");
+                    }
                 case HttpStatus.SC_UNAUTHORIZED:
                     return FormValidation
                       .warning("You are not authorized to access to this URL...");
@@ -317,6 +324,10 @@ public class HttpRetriever extends LibraryRetriever {
         } catch (IOException | URISyntaxException e) {
             return FormValidation.warning(e, "Cannot validate default version.");
         }
+    }
+
+    boolean isSecure(URL url) {
+        return HTTPS_PROTOCOL.equals(url.getProtocol());
     }
 
     private String readVersion(FilePath filePath) throws IOException, InterruptedException {

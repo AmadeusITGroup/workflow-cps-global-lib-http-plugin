@@ -14,11 +14,6 @@ import hudson.model.TaskListener;
 import hudson.slaves.WorkspaceList;
 import hudson.util.FormValidation;
 import hudson.util.Secret;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.nio.file.Files;
-import java.util.Objects;
 import jenkins.model.Jenkins;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpHeaders;
@@ -30,6 +25,12 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.file.Files;
+import java.util.Objects;
 
 @RunWith(MockitoJUnitRunner.class)
 public class HttpRetrieverTest {
@@ -185,6 +186,13 @@ public class HttpRetrieverTest {
     }
 
     @Test
+    public void validatesVersionReturnsWarningIfNotHttps() {
+        retriever.httpsUsed = false;
+        FormValidation validation = retriever.validateVersion("library-name", "1.2.3");
+        Assert.assertEquals(FormValidation.Kind.WARNING, validation.kind);
+    }
+
+    @Test
     public void returnsWarningIfCantValidateVersion() throws IOException {
         createRetriever("http://localhost/does-not-exist.zip", RSC_FILE, HttpURLConnection.HTTP_NOT_FOUND);
         FormValidation validation = retriever.validateVersion("library-name", "1.2.3");
@@ -201,10 +209,16 @@ public class HttpRetrieverTest {
 
     private class HttpRetrieverStub extends HttpRetriever {
 
+        private boolean httpsUsed = true;
+
         public HttpRetrieverStub(String url) {
             super(url, "credentialsId", jenkins);
         }
 
+        @Override
+        boolean isSecure(URL url) {
+            return httpsUsed;
+        }
 
         @Override
         UsernamePasswordCredentials initPasswordCredentials(Run<?, ?> run) {
