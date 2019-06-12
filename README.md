@@ -140,7 +140,7 @@ Users can also retrieve shared libraries from their Jenkinsfile, by defining it 
 // User custom libraries retriever
 library identifier: 'custom-libraries@4.1.0', retriever: http(
    credentialsId: 'CREDS_ID',
-   url: 'https://my-artifactory.com/mvn-repository/path/to/libraries/external-shared-libraries/${library.external-shared-libraries.version}/external-shared-libraries-${library.external-shared-libraries.version}.zip')
+   httpURL: 'https://my-artifactory.com/mvn-repository/path/to/libraries/external-shared-libraries/${library.external-shared-libraries.version}/external-shared-libraries-${library.external-shared-libraries.version}.zip')
 ```
 
 ## Contributing

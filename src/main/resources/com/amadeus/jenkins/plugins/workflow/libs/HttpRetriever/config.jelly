@@ -27,7 +27,7 @@ THE SOFTWARE.
 
 <j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:c="/lib/credentials" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:t="/lib/hudson">
 
-<f:entry title="${%URL}" field="url">
+<f:entry title="${%URL}" field="httpURL">
     <f:textbox/>
 </f:entry>
 
