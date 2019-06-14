@@ -9,6 +9,7 @@ import hudson.AbortException;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.model.Computer;
+import hudson.model.Item;
 import hudson.model.Node;
 import hudson.model.Run;
 import hudson.model.TaskListener;
@@ -35,7 +36,9 @@ import org.jenkinsci.plugins.workflow.libs.LibraryRetriever;
 import org.jenkinsci.plugins.workflow.libs.LibraryRetrieverDescriptor;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
+import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.QueryParameter;
 
 import javax.annotation.Nonnull;
 import java.io.File;
@@ -232,7 +235,7 @@ public class HttpRetriever extends LibraryRetriever {
     }
 
     private FilePath download(String sourceURL, UsernamePasswordCredentials passwordCredentials,
-                                    String zipFileName, WorkspaceList.Lease lease)
+                              String zipFileName, WorkspaceList.Lease lease)
             throws IOException, URISyntaxException {
         // Copying it in workspace
         try (CloseableHttpClient client = HttpClients.createDefault()) {
@@ -240,7 +243,7 @@ public class HttpRetriever extends LibraryRetriever {
             HttpGet get = new HttpGet(new URL(sourceURL).toURI());
             try (CloseableHttpResponse response = client.execute(get, context)) {
                 int statusCode = response.getStatusLine().getStatusCode();
-                if(statusCode != HttpStatus.SC_OK){
+                if (statusCode != HttpStatus.SC_OK) {
                     throw new IOException("Failed to download " + sourceURL + ". Returned code: " + statusCode);
                 }
                 HttpEntity entity = response.getEntity();
@@ -266,7 +269,7 @@ public class HttpRetriever extends LibraryRetriever {
     private FilePath getDownloadFolder(String name, Run<?, ?> run) throws IOException {
         FilePath dir;
         if (run.getParent() instanceof TopLevelItem) {
-            FilePath baseWorkspace = jenkins.getWorkspaceFor((TopLevelItem)run.getParent());
+            FilePath baseWorkspace = jenkins.getWorkspaceFor((TopLevelItem) run.getParent());
             if (baseWorkspace == null) {
                 throw new IOException(jenkins.getDisplayName() + " may be offline");
             }
@@ -314,8 +317,7 @@ public class HttpRetriever extends LibraryRetriever {
                 case HttpStatus.SC_OK:
                     return validateVersionIfCheckIsOk(newURL, version);
                 case HttpStatus.SC_UNAUTHORIZED:
-                    return FormValidation
-                      .warning("You are not authorized to access to this URL...");
+                    return FormValidation.warning("You are not authorized to access to this URL...");
                 default:
                     return FormValidation.warning("This URL does not exist...");
             }
@@ -330,7 +332,7 @@ public class HttpRetriever extends LibraryRetriever {
             return FormValidation.ok(valid);
         } else {
             return FormValidation.warning(valid + " But the protocol is insecure... "
-                + "Consider switching to HTTPS, particularly if you are using Credentials.");
+                    + "Consider switching to HTTPS, particularly if you are using Credentials.");
         }
     }
 
@@ -343,7 +345,7 @@ public class HttpRetriever extends LibraryRetriever {
             return IOUtils.toString(inputStream);
         } catch (FileNotFoundException | NoSuchFileException e) {
             Logger.getLogger(HttpRetriever.class.getName())
-                .log(Level.FINER,"version.txt not found in the archive.", e);
+                    .log(Level.FINER, "version.txt not found in the archive.", e);
             return null;
         }
 
@@ -402,9 +404,21 @@ public class HttpRetriever extends LibraryRetriever {
             return "HTTP";
         }
 
-        public ListBoxModel doFillCredentialsIdItems() {
+        public ListBoxModel doFillCredentialsIdItems(@AncestorInPath Item item,
+                                                     @QueryParameter String credentialsId) {
             StandardListBoxModel result = new StandardListBoxModel();
             result.includeEmptyValue();
+
+            if (item == null) {
+                if (!Jenkins.get().hasPermission(Jenkins.ADMINISTER)) {
+                    return result.includeCurrentValue(credentialsId);
+                }
+            } else {
+                if (!item.hasPermission(Item.EXTENDED_READ) && !item.hasPermission(CredentialsProvider.USE_ITEM)) {
+                    return result.includeCurrentValue(credentialsId);
+                }
+            }
+
             List<StandardUsernameCredentials> standardUsernameCredentials = CredentialsProvider.lookupCredentials(
                     StandardUsernameCredentials.class, Jenkins.get(), ACL.SYSTEM, Collections.emptyList());
             for (StandardUsernameCredentials standardUsernameCredential : standardUsernameCredentials) {
