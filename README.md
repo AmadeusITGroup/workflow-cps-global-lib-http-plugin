@@ -147,6 +147,13 @@ library identifier: 'custom-libraries@4.1.0', retriever: http(
 
 You can contribute to this plugin by retrieving the source and following the [official Jenkins plugin tutorial](https://wiki.jenkins.io/display/JENKINS/Plugin+tutorial) to install, run, test and package it.
 
+## Release process
+
+* Make sure your fulfilled the requirements that can be found here: https://jenkins.io/doc/developer/publishing/releasing/
+* ```mvn release:prepare```
+* ```mvn release:perform```
+* If things go wrong ```mvn release:clean```
+
 ## Legal
 
 This project is licensed under the terms of the [MIT license](LICENSE).
