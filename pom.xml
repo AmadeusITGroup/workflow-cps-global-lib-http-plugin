@@ -14,7 +14,8 @@
   <version>1.2.2-SNAPSHOT</version>
   <packaging>hpi</packaging>
   <name>Pipeline: Shared Groovy Libraries through HTTP retrieval</name>
-  <url>https://wiki.jenkins.io/display/JENKINS/Pipeline+Shared+Groovy+Libraries+Plugin</url>
+  <url>https://wiki.jenkins.io/display/JENKINS/HTTP+Shared+Libraries+Retriever+plugin</url>
+
   <licenses>
     <license>
       <name>MIT License</name>
