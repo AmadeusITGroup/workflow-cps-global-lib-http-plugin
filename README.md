@@ -23,10 +23,15 @@ You can follow the steps hereafter to install the plugin:
 
 ### Installing from artefact
 
-TODO Update when releases will be published on github (with the link and more details)
+#### Installing from the Plugins site
 
-Download the wished plugin release from the Github releases section.
-Go to the Jenkins Administration Plugins UI > Advanced section and upload the plugin .hpi file.
+The plugin is referenced as an official plugin in the Jenkins update site, so you should be able to use the integrated search in the Plugin section.
+
+#### To install the plugin manually
+
+You can find the archives of all the version of the Plugin on the [Update site](https://plugins.jenkins.io/workflow-cps-global-lib-http).
+You can also Download the wished plugin release from the Github releases section.
+The, go to the Jenkins Administration Plugins UI > Advanced section and upload the plugin .hpi file.
 
 ## How to use the plugin
 
