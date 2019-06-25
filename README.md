@@ -151,8 +151,7 @@ The URL of the HTTP retriever is version-dynamic, it follows the Jenkins standar
 Users can also retrieve shared libraries from their Jenkinsfile, by defining it with this syntax:
 
 ```groovy
-// User custom libraries retriever
-library identifier: 'custom-libraries@4.1.0', retriever: http(
+library identifier: 'external-shared-libraries@4.1.0', retriever: http(
    credentialsId: 'CREDS_ID',
    httpURL: 'https://my-artifactory.com/mvn-repository/path/to/libraries/external-shared-libraries/${library.external-shared-libraries.version}/external-shared-libraries-${library.external-shared-libraries.version}.zip')
 ```
