@@ -1,6 +1,5 @@
 package com.amadeus.jenkins.plugins.workflow.libs;
 
-import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
 import com.cloudbees.plugins.credentials.common.UsernamePasswordCredentials;
@@ -22,12 +21,17 @@ import jenkins.model.Jenkins;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
+import org.apache.http.HttpHost;
 import org.apache.http.HttpStatus;
 import org.apache.http.auth.AuthScope;
+import org.apache.http.client.AuthCache;
+import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.protocol.HttpClientContext;
+import org.apache.http.impl.auth.BasicScheme;
+import org.apache.http.impl.client.BasicAuthCache;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
@@ -57,6 +61,11 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static com.cloudbees.plugins.credentials.CredentialsProvider.USE_ITEM;
+import static com.cloudbees.plugins.credentials.CredentialsProvider.findCredentialById;
+import static com.cloudbees.plugins.credentials.CredentialsProvider.lookupCredentials;
+import static com.cloudbees.plugins.credentials.CredentialsProvider.track;
 
 /**
  * The goal of this plugin is to provide another way to retrieve shared libraries via the @Library declaration
@@ -217,11 +226,10 @@ public class HttpRetriever extends LibraryRetriever {
 
     UsernamePasswordCredentials initPasswordCredentials(Run<?, ?> run) {
         final UsernamePasswordCredentials passwordCredentials;
-        StandardUsernameCredentials credentials = CredentialsProvider.findCredentialById(credentialsId,
-                StandardUsernameCredentials.class, run);
+        StandardUsernameCredentials credentials = findCredentialById(credentialsId, StandardUsernameCredentials.class, run);
         if (credentials instanceof UsernamePasswordCredentials) {
             passwordCredentials = (UsernamePasswordCredentials) credentials;
-            CredentialsProvider.track(jenkins, passwordCredentials);
+            track(jenkins, passwordCredentials);
         } else {
             passwordCredentials = null;
         }
@@ -237,29 +245,56 @@ public class HttpRetriever extends LibraryRetriever {
     private FilePath download(String sourceURL, UsernamePasswordCredentials passwordCredentials,
                               String zipFileName, WorkspaceList.Lease lease)
             throws IOException, URISyntaxException {
+
         // Copying it in workspace
+        CredentialsProvider credentialsProvider = getCredentialsProvider(passwordCredentials);
         try (CloseableHttpClient client = HttpClients.createDefault()) {
-            HttpClientContext context = getHttpClientContext(passwordCredentials);
-            HttpGet get = new HttpGet(new URL(sourceURL).toURI());
+            URL url = new URL(sourceURL);
+            HttpClientContext context = getHttpClientContext(credentialsProvider);
+            HttpGet get = new HttpGet(url.toURI());
             try (CloseableHttpResponse response = client.execute(get, context)) {
                 int statusCode = response.getStatusLine().getStatusCode();
                 if (statusCode != HttpStatus.SC_OK) {
-                    throw new IOException("Failed to download " + sourceURL + ". Returned code: " + statusCode);
-                }
-                HttpEntity entity = response.getEntity();
-                try (InputStream inputStream = entity.getContent()) {
-                    String wholeFilenameWithTargetPath = lease.path.child(zipFileName).getRemote();
-                    File file = new File(wholeFilenameWithTargetPath);
-                    if (file.getParentFile().exists() || file.getParentFile().mkdirs()) {
-                        Files.copy(inputStream, Paths.get(wholeFilenameWithTargetPath),
-                                StandardCopyOption.REPLACE_EXISTING);
-                        return new FilePath(file);
-                    } else {
-                        throw new IOException("Could not create the folders for " + wholeFilenameWithTargetPath);
+                    setPreemptiveAuth(context, url);
+                    try (CloseableHttpResponse preemptiveResponse = client.execute(get, context)) {
+                        statusCode = preemptiveResponse.getStatusLine().getStatusCode();
+                        if (statusCode != HttpStatus.SC_OK) {
+                            throw new IOException("Failed to download " + sourceURL + ". Returned code: " + statusCode);
+                        }
+                        return writeResponseToFile(zipFileName, lease, preemptiveResponse);
                     }
                 }
+                return writeResponseToFile(zipFileName, lease, response);
             }
         }
+    }
+
+    private FilePath writeResponseToFile(String zipFileName, WorkspaceList.Lease lease, CloseableHttpResponse response) throws IOException {
+        HttpEntity entity = response.getEntity();
+        try (InputStream inputStream = entity.getContent()) {
+            String wholeFilenameWithTargetPath = lease.path.child(zipFileName).getRemote();
+            File file = new File(wholeFilenameWithTargetPath);
+            if (file.getParentFile().exists() || file.getParentFile().mkdirs()) {
+                Files.copy(inputStream, Paths.get(wholeFilenameWithTargetPath),
+                        StandardCopyOption.REPLACE_EXISTING);
+                return new FilePath(file);
+            } else {
+                throw new IOException("Could not create the folders for " + wholeFilenameWithTargetPath);
+            }
+        }
+    }
+
+    private CredentialsProvider getCredentialsProvider(UsernamePasswordCredentials passwordCredentials) {
+        if (passwordCredentials != null) {
+            BasicCredentialsProvider provider = new BasicCredentialsProvider();
+            String username = passwordCredentials.getUsername();
+            String password = passwordCredentials.getPassword().getPlainText();
+            org.apache.http.auth.UsernamePasswordCredentials credentials
+                    = new org.apache.http.auth.UsernamePasswordCredentials(username, password);
+            provider.setCredentials(AuthScope.ANY, credentials);
+            return provider;
+        }
+        return null;
     }
 
     WorkspaceList.Lease getWorkspace(FilePath dir, Computer computer) throws InterruptedException {
@@ -360,10 +395,9 @@ public class HttpRetriever extends LibraryRetriever {
         return match.find() ? match.replaceAll(version) : url;
     }
 
-    private int checkURL(URL url)
-            throws IOException, URISyntaxException {
+    private int checkURL(URL url) throws IOException, URISyntaxException {
         try (CloseableHttpClient client = HttpClients.createDefault()) {
-            HttpClientContext context = getHttpClientContext(null);
+            HttpClientContext context = HttpClientContext.create();
             HttpHead head = new HttpHead(url.toURI());
             try (CloseableHttpResponse response = client.execute(head, context)) {
                 return response.getStatusLine().getStatusCode();
@@ -371,19 +405,26 @@ public class HttpRetriever extends LibraryRetriever {
         }
     }
 
-    private HttpClientContext getHttpClientContext(UsernamePasswordCredentials passwordCredentials) {
+    private HttpClientContext getHttpClientContext(CredentialsProvider credentialsProvider) {
         HttpClientContext context = HttpClientContext.create();
         // Authenticate if credentials are given
-        if (passwordCredentials != null) {
-            BasicCredentialsProvider provider = new BasicCredentialsProvider();
-            String username = passwordCredentials.getUsername();
-            String password = passwordCredentials.getPassword().getPlainText();
-            org.apache.http.auth.UsernamePasswordCredentials credentials
-                    = new org.apache.http.auth.UsernamePasswordCredentials(username, password);
-            provider.setCredentials(AuthScope.ANY, credentials);
-            context.setCredentialsProvider(provider);
+        if (credentialsProvider != null) {
+            context.setCredentialsProvider(credentialsProvider);
         }
         return context;
+    }
+
+    private void setPreemptiveAuth(HttpClientContext context, URL url) {
+        // Create AuthCache instance
+        AuthCache authCache = new BasicAuthCache();
+        // Generate BASIC scheme object and add it to the local
+        // auth cache
+        BasicScheme basicAuth = new BasicScheme();
+        HttpHost target = new HttpHost(url.getHost(), url.getPort(), url.getProtocol());
+        authCache.put(target, basicAuth);
+
+        // Add AuthCache to the execution context
+        context.setAuthCache(authCache);
     }
 
     // ---------- DESCRIPTOR ------------ //
@@ -414,12 +455,12 @@ public class HttpRetriever extends LibraryRetriever {
                     return result.includeCurrentValue(credentialsId);
                 }
             } else {
-                if (!item.hasPermission(Item.EXTENDED_READ) && !item.hasPermission(CredentialsProvider.USE_ITEM)) {
+                if (!item.hasPermission(Item.EXTENDED_READ) && !item.hasPermission(USE_ITEM)) {
                     return result.includeCurrentValue(credentialsId);
                 }
             }
 
-            List<StandardUsernameCredentials> standardUsernameCredentials = CredentialsProvider.lookupCredentials(
+            List<StandardUsernameCredentials> standardUsernameCredentials = lookupCredentials(
                     StandardUsernameCredentials.class, Jenkins.get(), ACL.SYSTEM, Collections.emptyList());
             for (StandardUsernameCredentials standardUsernameCredential : standardUsernameCredentials) {
                 result.with(standardUsernameCredential);

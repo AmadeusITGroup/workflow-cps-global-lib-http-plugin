@@ -76,10 +76,10 @@ public class HttpRetrieverTest {
         createRetriever(getUrl(RSC_FILE), RSC_FILE);
 
         wireMock.stubFor(
-          WireMock.any(WireMock.anyUrl())
-            .atPriority(1)
-            .andMatching(r -> MatchResult.of(!r.getMethod().equals(RequestMethod.HEAD) && !r.containsHeader(HttpHeaders.AUTHORIZATION)))
-            .willReturn(WireMock.unauthorized().withHeader(HttpHeaders.WWW_AUTHENTICATE, "Basic")));
+                WireMock.any(WireMock.anyUrl())
+                        .atPriority(5)
+                        .andMatching(r -> MatchResult.of(!r.getMethod().equals(RequestMethod.HEAD) && !r.containsHeader(HttpHeaders.AUTHORIZATION)))
+                        .willReturn(WireMock.unauthorized().withHeader(HttpHeaders.WWW_AUTHENTICATE, "Basic")));
     }
 
     @org.junit.After
@@ -116,6 +116,25 @@ public class HttpRetrieverTest {
 
     @Test
     public void retrieves() throws Exception {
+        Assert.assertFalse(target.child("version.txt").exists());
+        retriever.retrieve("http-lib-retriever-tests", "1.2.3", target, run, listener);
+        Assert.assertTrue(target.child("version.txt").exists());
+        Assert.assertTrue(target.child("src").exists());
+        Assert.assertTrue(target.child("vars").exists());
+        Assert.assertTrue(target.child("resources").exists());
+    }
+
+    /**
+     * In the Admin section 'General Security Configuration', Artifactory has an option
+     * 'Hide Existence of Unauthorized Resources' which throws a 404 instead of a 401 when a resource is not authorized
+     */
+    @Test
+    public void retrievesForArtifactoryWithHideUnauthorized() throws Exception {
+        wireMock.stubFor(
+                WireMock.any(WireMock.anyUrl())
+                        .atPriority(1)
+                        .andMatching(r -> MatchResult.of(!r.getMethod().equals(RequestMethod.HEAD) && !r.containsHeader(HttpHeaders.AUTHORIZATION)))
+                        .willReturn(WireMock.notFound()));
         Assert.assertFalse(target.child("version.txt").exists());
         retriever.retrieve("http-lib-retriever-tests", "1.2.3", target, run, listener);
         Assert.assertTrue(target.child("version.txt").exists());
