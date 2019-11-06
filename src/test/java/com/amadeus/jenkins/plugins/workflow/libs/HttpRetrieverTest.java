@@ -1,6 +1,8 @@
 package com.amadeus.jenkins.plugins.workflow.libs;
 
+import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.common.UsernamePasswordCredentials;
+import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import com.github.tomakehurst.wiremock.http.RequestMethod;
@@ -13,7 +15,6 @@ import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.slaves.WorkspaceList;
 import hudson.util.FormValidation;
-import hudson.util.Secret;
 import jenkins.model.Jenkins;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpHeaders;
@@ -45,8 +46,7 @@ public class HttpRetrieverTest {
     @Mock
     TaskListener listener;
 
-    @Mock
-    UsernamePasswordCredentials passwordCredentialsMock;
+    UsernamePasswordCredentials passwordCredentials;
 
     @Mock
     Jenkins jenkins;
@@ -69,10 +69,8 @@ public class HttpRetrieverTest {
         Mockito.when(run.getParent()).thenReturn(parent);
         Mockito.when(jenkins.getWorkspaceFor(parent)).thenReturn(target);
         Mockito.when(listener.getLogger()).thenReturn(System.out);
-        Secret pwd = Secret.fromString("{cGFzc3dvcmQ=}");
-        Mockito.when(passwordCredentialsMock.getPassword()).thenReturn(pwd);
-        Mockito.when(passwordCredentialsMock.getUsername()).thenReturn("USER");
-
+        passwordCredentials = new UsernamePasswordCredentialsImpl(
+                CredentialsScope.SYSTEM, "idcreds", "descr", "user", "{cGFzc3dvcmQ=}");
         createRetriever(getUrl(RSC_FILE), RSC_FILE);
 
         wireMock.stubFor(
@@ -102,7 +100,7 @@ public class HttpRetrieverTest {
         wireMock.stubFor(
                 WireMock.get(WireMock.urlMatching(".*" + relativeUrlToServe))
                         .withBasicAuth("USER", "")
-                        .withBasicAuth(passwordCredentialsMock.getUsername(), passwordCredentialsMock.getPassword().getPlainText())
+                        .withBasicAuth(passwordCredentials.getUsername(), passwordCredentials.getPassword().getPlainText())
                         .atPriority(2)
                         .willReturn(WireMock.aResponse().withBody(IOUtils.toByteArray(archive)))
 
@@ -128,8 +126,8 @@ public class HttpRetrieverTest {
      * In the Admin section 'General Security Configuration', Artifactory has an option
      * 'Hide Existence of Unauthorized Resources' which throws a 404 instead of a 401 when a resource is not authorized
      */
-    @Test
-    public void retrievesForArtifactoryWithHideUnauthorized() throws Exception {
+    @Test(expected = IOException.class)
+    public void retrievesFailsByDefaultForArtifactoryWithHideUnauthorized() throws Exception {
         wireMock.stubFor(
                 WireMock.any(WireMock.anyUrl())
                         .atPriority(1)
@@ -142,6 +140,27 @@ public class HttpRetrieverTest {
         Assert.assertTrue(target.child("vars").exists());
         Assert.assertTrue(target.child("resources").exists());
     }
+
+    /**
+     * In the Admin section 'General Security Configuration', Artifactory has an option
+     * 'Hide Existence of Unauthorized Resources' which throws a 404 instead of a 401 when a resource is not authorized
+     */
+    @Test
+    public void retrievesForArtifactoryWithHideUnauthorizedWhenPreemptiveAuthActivated() throws Exception {
+        retriever.preemptiveAuth = true;
+        wireMock.stubFor(
+                WireMock.any(WireMock.anyUrl())
+                        .atPriority(1)
+                        .andMatching(r -> MatchResult.of(!r.getMethod().equals(RequestMethod.HEAD) && !r.containsHeader(HttpHeaders.AUTHORIZATION)))
+                        .willReturn(WireMock.notFound()));
+        Assert.assertFalse(target.child("version.txt").exists());
+        retriever.retrieve("http-lib-retriever-tests", "1.2.3", target, run, listener);
+        Assert.assertTrue(target.child("version.txt").exists());
+        Assert.assertTrue(target.child("src").exists());
+        Assert.assertTrue(target.child("vars").exists());
+        Assert.assertTrue(target.child("resources").exists());
+    }
+
 
     @Test
     public void acceptsIncorrectVersionsDeclared() throws Exception {
@@ -229,9 +248,25 @@ public class HttpRetrieverTest {
     private class HttpRetrieverStub extends HttpRetriever {
 
         private boolean httpsUsed = true;
+        private boolean preemptiveAuth = false;
 
         public HttpRetrieverStub(String url) {
-            super(url, "credentialsId", jenkins);
+            super(url, "credentialsId", false);
+        }
+
+        @Override
+        Jenkins getJenkins() {
+            return jenkins;
+        }
+
+        @Override
+        public boolean isPreemptiveAuth() {
+            return preemptiveAuth;
+        }
+
+        @Override
+        UsernamePasswordCredentials findCredentials(String credentialsId) {
+            return passwordCredentials;
         }
 
         @Override
@@ -241,7 +276,7 @@ public class HttpRetrieverTest {
 
         @Override
         UsernamePasswordCredentials initPasswordCredentials(Run<?, ?> run) {
-            return passwordCredentialsMock;
+            return passwordCredentials;
         }
 
         Computer getSlave() throws IOException {

@@ -25,7 +25,6 @@ import org.jvnet.hudson.test.JenkinsRule;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.Objects;
 import java.util.function.Function;
@@ -47,10 +46,10 @@ public class HttpRetrieverIntegrationTests {
         globalLibraries = ExtensionList.lookupSingleton(GlobalLibraries.class);
 
         wireMock.stubFor(
-          WireMock.any(WireMock.anyUrl())
-            .atPriority(1)
-            .andMatching(r -> MatchResult.of(!r.getMethod().equals(RequestMethod.HEAD) && !r.containsHeader(HttpHeaders.AUTHORIZATION)))
-            .willReturn(WireMock.unauthorized().withHeader(HttpHeaders.WWW_AUTHENTICATE, "Basic")));
+                WireMock.any(WireMock.anyUrl())
+                        .atPriority(1)
+                        .andMatching(r -> MatchResult.of(!r.getMethod().equals(RequestMethod.HEAD) && !r.containsHeader(HttpHeaders.AUTHORIZATION)))
+                        .willReturn(WireMock.unauthorized().withHeader(HttpHeaders.WWW_AUTHENTICATE, "Basic")));
     }
 
     @Test
@@ -58,6 +57,19 @@ public class HttpRetrieverIntegrationTests {
         FilePath target = buildJobWithLibrary(
                 "http-lib-retriever-tests.zip",
                 "1.0"
+        );
+        Assert.assertTrue(target.child("version.txt").exists());
+        Assert.assertTrue(target.child("src").exists());
+        Assert.assertTrue(target.child("vars").exists());
+        Assert.assertTrue(target.child("resources").exists());
+    }
+
+    @Test
+    public void retrievesWithPreemptiveAuthEvenIfNotNeeded() throws Exception {
+        FilePath target = buildJobWithLibrary(
+                "http-lib-retriever-tests.zip",
+                "1.0",
+                true
         );
         Assert.assertTrue(target.child("version.txt").exists());
         Assert.assertTrue(target.child("src").exists());
@@ -130,7 +142,7 @@ public class HttpRetrieverIntegrationTests {
     public void doesNotRetrieveIfUrlNotPassed() throws Exception {
         boolean buildFailed = false;
         try {
-            FilePath target = buildJobWithLibrary("http-lib-retriever-tests.zip", "1.2.3", libraryName -> null);
+            FilePath target = buildJobWithLibrary("http-lib-retriever-tests.zip", "1.2.3", libraryName -> null, false);
             Assert.assertFalse(target.child("src").exists());
         } catch (java.lang.AssertionError e) {
             buildFailed = true;
@@ -142,12 +154,18 @@ public class HttpRetrieverIntegrationTests {
     private @Nonnull
     FilePath buildJobWithLibrary(@Nullable String fixtureName, @Nullable String libraryVersion)
             throws Exception {
-        return buildJobWithLibrary(fixtureName, libraryVersion, libraryName -> wireMock.url(libraryName + ".zip"));
+        return buildJobWithLibrary(fixtureName, libraryVersion, libraryName -> wireMock.url(libraryName + ".zip"), false);
+    }
+
+    private @Nonnull
+    FilePath buildJobWithLibrary(@Nullable String fixtureName, @Nullable String libraryVersion,
+                                 boolean withPreemptiveAuth) throws Exception {
+        return buildJobWithLibrary(fixtureName, libraryVersion, libraryName -> wireMock.url(libraryName + ".zip"), withPreemptiveAuth);
     }
 
     private @Nonnull
     FilePath buildJobWithLibrary(@Nullable String fixtureName, @Nullable String libraryVersion, @Nonnull
-            Function<String, String> urlBuilder)
+            Function<String, String> urlBuilder, boolean withPreemptiveAuth)
             throws Exception {
         // FIXME archive name === directory
 
@@ -187,13 +205,47 @@ public class HttpRetrieverIntegrationTests {
         }
         globalLibraries.getLibraries().add(new LibraryConfiguration(
                 libraryName,
-                new HttpRetriever(urlBuilder.apply(libraryName), credentials.getId())
+                new HttpRetriever(urlBuilder.apply(libraryName), credentials.getId(), withPreemptiveAuth)
         ));
         WorkflowJob p = j.jenkins.createProject(WorkflowJob.class, "p");
         p.setDefinition(new CpsFlowDefinition(importScript, true));
 
         WorkflowRun run = j.buildAndAssertSuccess(p);
         return new FilePath(run.getRootDir().toPath().resolve("libs").resolve(libraryName).toFile());
+    }
+
+    @Test
+    public void retrievesWithPreemptiveAuthIfNeeded() throws Exception {
+        String libraryName = "foo";
+        String importScript = "@Library('foo@1.0') _";
+        String fixtureName = "http-lib-retriever-tests.zip";
+        InputStream archive = Objects.requireNonNull(ClassLoader.getSystemResourceAsStream(fixtureName));
+        wireMock.stubFor(
+                WireMock.get(WireMock.anyUrl())
+                        .atPriority(2)
+                        .withBasicAuth(credentials.getUsername(), credentials.getPassword().getPlainText())
+                        .willReturn(WireMock.aResponse().withBody(IOUtils.toByteArray(archive)))
+
+        );
+        wireMock.stubFor(
+                WireMock.any(WireMock.anyUrl())
+                        .atPriority(1)
+                        .andMatching(r -> MatchResult.of(!r.getMethod().equals(RequestMethod.HEAD) && !r.containsHeader(HttpHeaders.AUTHORIZATION)))
+                        .willReturn(WireMock.notFound()));
+        globalLibraries.getLibraries().add(new LibraryConfiguration(
+                libraryName,
+                new HttpRetriever(wireMock.url(libraryName + ".zip"), credentials.getId(), true)
+        ));
+        WorkflowJob p = j.jenkins.createProject(WorkflowJob.class, "p");
+        p.setDefinition(new CpsFlowDefinition(importScript, true));
+
+        WorkflowRun run = j.buildAndAssertSuccess(p);
+        FilePath target = new FilePath(run.getRootDir().toPath().resolve("libs").resolve(libraryName).toFile());
+
+        Assert.assertTrue(target.child("version.txt").exists());
+        Assert.assertTrue(target.child("src").exists());
+        Assert.assertTrue(target.child("vars").exists());
+        Assert.assertTrue(target.child("resources").exists());
     }
 
 }

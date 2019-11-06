@@ -35,4 +35,8 @@ THE SOFTWARE.
     <c:select/>
 </f:entry>
 
+<f:entry title="Use preemptive authentication?" field="preemptiveAuth" description="If checked, uses preemptive authentication.">
+  <f:checkbox/>
+</f:entry>
+
 </j:jelly>
