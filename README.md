@@ -2,7 +2,7 @@
 
 [![Build Status](https://ci.jenkins.io/job/Plugins/job/workflow-cps-global-lib-http-plugin/job/master/badge/icon)](https://ci.jenkins.io/job/Plugins/job/workflow-cps-global-lib-http-plugin/job/master/)
 [![GitHub actions workflow](https://github.com/jenkinsci/workflow-cps-global-lib-http-plugin/workflows/Test%20workflow-cps-global-lib-http-plugin/badge.svg)](https://github.com/jenkinsci/workflow-cps-global-lib-http-plugin/blob/master/.github/workflows/workflow.yml)
-[![codecov](https://codecov.io/gh/AmadeusITGroup/workflow-cps-global-lib-http-plugin/branch/master/graph/badge.svg)](https://codecov.io/gh/AmadeusITGroup/workflow-cps-global-lib-http-plugin)
+[![codecov](https://codecov.io/gh/jenkinsci/workflow-cps-global-lib-http-plugin/branch/master/graph/badge.svg)](https://codecov.io/gh/jenkinsci/workflow-cps-global-lib-http-plugin)
 [![Join the chat at https://gitter.im/AmadeusITGroup/workflow-cps-global-lib-http-plugin](https://badges.gitter.im/AmadeusITGroup/workflow-cps-global-lib-http-plugin.svg)](https://gitter.im/AmadeusITGroup/workflow-cps-global-lib-http-plugin?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![Dependabot Status](https://api.dependabot.com/badges/status?host=github&repo=jenkinsci/workflow-cps-global-lib-http-plugin)](https://dependabot.com)
 
