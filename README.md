@@ -1,5 +1,6 @@
 # HTTP Shared Libraries Retriever plugin
 
+[![Latest tag](https://img.shields.io/github/v/tag/jenkinsci/workflow-cps-global-lib-http-plugin)](https://github.com/jenkinsci/workflow-cps-global-lib-http-plugin/tags)
 [![Build Status](https://ci.jenkins.io/job/Plugins/job/workflow-cps-global-lib-http-plugin/job/master/badge/icon)](https://ci.jenkins.io/job/Plugins/job/workflow-cps-global-lib-http-plugin/job/master/)
 [![GitHub actions workflow](https://github.com/jenkinsci/workflow-cps-global-lib-http-plugin/workflows/Test%20workflow-cps-global-lib-http-plugin/badge.svg)](https://github.com/jenkinsci/workflow-cps-global-lib-http-plugin/blob/master/.github/workflows/workflow.yml)
 [![codecov](https://codecov.io/gh/jenkinsci/workflow-cps-global-lib-http-plugin/branch/master/graph/badge.svg)](https://codecov.io/gh/jenkinsci/workflow-cps-global-lib-http-plugin)
