@@ -1,4 +1,4 @@
-name: Test workflow-cps-global-lib-http-plugin
+name: GH Workflow
 
 on: [push, pull_request]
 
@@ -12,7 +12,22 @@ jobs:
       uses: actions/setup-java@v1
       with:
         java-version: 1.8
-    - name: Bump version and push tag
+    - name: Bump version
+      if: github.ref == 'refs/heads/master'
+      id: pre-versioning
+      uses: anothrNick/github-tag-action@1.8.0
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        REPO_OWNER: fabricepipart
+        RELEASE_BRANCHES: executed-to-compute-the-tag
+    - name: Update version
+      if: github.ref == 'refs/heads/master'
+      env:
+        PREVERSION: ${{ steps.pre-versioning.outputs.new_tag }}
+      run: |
+        export VERSION=$(echo $PREVERSION | cut -f1 -d-)
+        mvn -B -U versions:set -DnewVersion=${VERSION} &> /dev/null
+    - name: Push tag
       id: versioning
       uses: anothrNick/github-tag-action@1.8.0
       env:
@@ -20,11 +35,8 @@ jobs:
         REPO_OWNER: fabricepipart
         RELEASE_BRANCHES: master
     - name: Build Maven
-      env:
-        VERSION: ${{ steps.versioning.outputs.new_tag }}
       run: |
-        mvn -B -U versions:set -DnewVersion=${VERSION} &> /dev/null
-        mvn -B -U clean verify -DskipTests
+        mvn -B -U clean verify
     - uses: codecov/codecov-action@v1.0.3
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
