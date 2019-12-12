@@ -27,6 +27,15 @@ jobs:
       run: |
         export VERSION=$(echo $PREVERSION | cut -f1 -d-)
         mvn -B -U versions:set -DnewVersion=${VERSION} &> /dev/null
+    - name: Commit changed files
+      if: github.ref == 'refs/heads/master'
+      uses: stefanzweifel/git-auto-commit-action@v2.4.0
+      with:
+        commit_message: Version bump
+        branch: ${{ github.head_ref }}
+        file_pattern: pom.xml
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     - name: Push tag
       id: versioning
       uses: anothrNick/github-tag-action@1.8.0
