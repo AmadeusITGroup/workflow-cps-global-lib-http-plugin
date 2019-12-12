@@ -24,12 +24,24 @@ jobs:
         VERSION: ${{ steps.versioning.outputs.new_tag }}
       run: |
         mvn -B -U versions:set -DnewVersion=${VERSION} &> /dev/null
-        mvn -B -U clean verify
+        mvn -B -U clean verify -DskipTests
     - uses: codecov/codecov-action@v1.0.3
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         flags: javaplugin
         name: codecov-java-plugin
+    - name: Release the Jenkins plugin
+      if: github.ref == 'refs/heads/master'
+      env:
+        VERSION: ${{ steps.versioning.outputs.new_tag }}
+        JENKINS_SETTINGS_XML: ${{ secrets.JENKINS_SETTINGS_XML }}
+      run: |
+        echo $JENKINS_SETTINGS_XML > settings.xml
+        git config user.name "$GITHUB_ACTOR"
+        git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+        echo "scm.url=scm\:git\:https\://${GITHUB_ACTOR}\:${GITHUB_TOKEN}@github.com/jenkinsci/workflow-cps-global-lib-http-plugin.git" > release.properties
+        echo "scm.tag=${VERSION}" >> release.properties
+        mvn -B -U release:perform -s settings.xml
 
   ci-windows-latest:
     runs-on: windows-latest
@@ -40,6 +52,8 @@ jobs:
       with:
         java-version: 1.8
     - name: Build Maven
+      env:
+        VERSION: ${{ steps.versioning.outputs.new_tag }}
       run: |
         mvn -B -U clean verify
 
