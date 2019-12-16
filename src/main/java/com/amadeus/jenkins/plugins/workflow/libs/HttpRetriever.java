@@ -487,9 +487,8 @@ public class HttpRetriever extends LibraryRetriever {
                     return result.includeCurrentValue(credentialsId);
                 }
             }
-
             List<StandardUsernameCredentials> standardUsernameCredentials = lookupCredentials(
-                    StandardUsernameCredentials.class, Jenkins.get(), ACL.SYSTEM, Collections.emptyList());
+                    StandardUsernameCredentials.class, item, ACL.SYSTEM, Collections.emptyList());
             for (StandardUsernameCredentials standardUsernameCredential : standardUsernameCredentials) {
                 result.with(standardUsernameCredential);
             }
