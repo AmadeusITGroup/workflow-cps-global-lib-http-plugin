@@ -14,7 +14,7 @@
   <version>1.10.0</version>
   <packaging>hpi</packaging>
   <name>Pipeline: Shared Groovy Libraries through HTTP retrieval</name>
-  <url>https://wiki.jenkins.io/display/JENKINS/HTTP+Shared+Libraries+Retriever+plugin</url>
+  <url>https://github.com/jenkinsci/workflow-cps-global-lib-http-plugin</url>
 
   <licenses>
     <license>
