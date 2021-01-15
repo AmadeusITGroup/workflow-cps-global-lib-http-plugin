@@ -7,9 +7,9 @@
 [![Join the chat at https://gitter.im/AmadeusITGroup/workflow-cps-global-lib-http-plugin](https://badges.gitter.im/AmadeusITGroup/workflow-cps-global-lib-http-plugin.svg)](https://gitter.im/AmadeusITGroup/workflow-cps-global-lib-http-plugin?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![Dependabot Status](https://api.dependabot.com/badges/status?host=github&repo=jenkinsci/workflow-cps-global-lib-http-plugin)](https://dependabot.com)
 
-The current official plugin [workflow-cps-global-lib](https://github.com/jenkinsci/workflow-cps-global-lib-plugin/) does provide a way to retrieve shared libraries through a SCM, such as Git. The goal of this plugin is to provide another way to retrieve shared libraries via the @Library declaration in a Jenkinsfile.
+The current official plugin [workflow-cps-global-lib](https://github.com/jenkinsci/workflow-cps-global-lib-plugin/) does provide a way to retrieve shared libraries through a SCM, such as Git. The goal of this plugin is to provide another way to retrieve shared libraries via the *@Library* declaration in a Jenkinsfile.
 
-This is a way to separate to concerns : source code (SCM) and built artefacts (binaries). Built artefacts are immutable, tagged and often stored on a different kind of infrastructure. Since pipelines can be used to make production loads, it makes sense to host the libraries on a server with a production-level SLA for example. You can also make sure that your artefact repository is close to your pipelines and share the same SLA. Having your Jenkins and your artefact repository close limitsr latency and limits network issues.
+This is a way to separate to concerns : source code (SCM) and built artefacts (binaries). Built artefacts are immutable, tagged and often stored on a different kind of infrastructure. Since pipelines can be used to make production loads, it makes sense to host the libraries on a server with a production-level SLA for example. You can also make sure that your artefact repository is close to your pipelines and share the same SLA. Having your Jenkins and your artefact repository close limits latency and limits network issues.
 
 ## Context
 
@@ -147,7 +147,7 @@ In Administration / Folder / Pipeline configuration views:
 
 *In our case, we provide an Artifactory URL that retrieves shared libraries source code packaged into a zip archive.*
 
-The URL of the HTTP retriever is version-dynamic, it follows the Jenkins standard annotation ${library.<library_name>.version} that is afterwards replaced either by the default version provided by the admin, or the version specified by the user Jenkinsfile in the @Library annotation.
+The URL of the HTTP retriever is version-dynamic, it follows the Jenkins standard annotation *${library.\<library\_name\>.version}* that is afterwards replaced either by the default version provided by the admin, or the version specified by the user Jenkinsfile in the *@Library* annotation.
 
 ### Directly in the Jenkinsfile
 
