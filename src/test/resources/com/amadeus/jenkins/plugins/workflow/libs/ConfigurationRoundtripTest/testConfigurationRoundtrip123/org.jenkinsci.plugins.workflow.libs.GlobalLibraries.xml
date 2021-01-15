@@ -1,0 +1,57 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<org.jenkinsci.plugins.workflow.libs.GlobalLibraries>
+    <libraries>
+        <org.jenkinsci.plugins.workflow.libs.LibraryConfiguration>
+            <name>foo</name>
+            <retriever class="com.amadeus.jenkins.plugins.workflow.libs.HttpRetriever">
+                <httpURL>http://example.com/</httpURL>
+                <credentialsId>someCredentials</credentialsId>
+                <jenkins class="hudson.model.Hudson">
+                    <disabledAdministrativeMonitors/>
+                    <version>2.121.3</version>
+                    <installStateName>TEST</installStateName>
+                    <numExecutors>2</numExecutors>
+                    <mode>NORMAL</mode>
+                    <useSecurity>true</useSecurity>
+                    <authorizationStrategy class="hudson.security.AuthorizationStrategy$Unsecured"/>
+                    <securityRealm class="hudson.security.SecurityRealm$None"/>
+                    <disableRememberMe>false</disableRememberMe>
+                    <projectNamingStrategy class="jenkins.model.ProjectNamingStrategy$DefaultProjectNamingStrategy"/>
+                    <workspaceDir>${JENKINS_HOME}/workspace/${ITEM_FULL_NAME}</workspaceDir>
+                    <buildsDir>${ITEM_ROOTDIR}/builds</buildsDir>
+                    <jdks>
+                        <hudson.model.JDK>
+                            <name>default</name>
+                            <home>/Library/Java/JavaVirtualMachines/adoptopenjdk-8.jdk/Contents/Home/jre</home>
+                            <properties/>
+                        </hudson.model.JDK>
+                    </jdks>
+                    <viewsTabBar class="hudson.views.DefaultViewsTabBar"/>
+                    <myViewsTabBar class="hudson.views.DefaultMyViewsTabBar"/>
+                    <clouds/>
+                    <quietPeriod>5</quietPeriod>
+                    <scmCheckoutRetryCount>0</scmCheckoutRetryCount>
+                    <views>
+                        <hudson.model.AllView>
+                            <owner class="hudson.model.Hudson" reference="../../.."/>
+                            <name>all</name>
+                            <filterExecutors>false</filterExecutors>
+                            <filterQueue>false</filterQueue>
+                            <properties class="hudson.model.View$PropertyList"/>
+                        </hudson.model.AllView>
+                    </views>
+                    <primaryView>all</primaryView>
+                    <slaveAgentPort>0</slaveAgentPort>
+                    <label></label>
+                    <crumbIssuer class="org.jvnet.hudson.test.TestCrumbIssuer"/>
+                    <nodeProperties/>
+                    <globalNodeProperties/>
+                    <noUsageStatistics>true</noUsageStatistics>
+                </jenkins>
+            </retriever>
+            <implicit>false</implicit>
+            <allowVersionOverride>true</allowVersionOverride>
+            <includeInChangesets>true</includeInChangesets>
+        </org.jenkinsci.plugins.workflow.libs.LibraryConfiguration>
+    </libraries>
+</org.jenkinsci.plugins.workflow.libs.GlobalLibraries>

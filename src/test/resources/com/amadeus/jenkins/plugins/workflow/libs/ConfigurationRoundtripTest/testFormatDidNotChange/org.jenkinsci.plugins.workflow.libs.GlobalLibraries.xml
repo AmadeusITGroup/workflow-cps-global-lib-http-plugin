@@ -1,0 +1,16 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<org.jenkinsci.plugins.workflow.libs.GlobalLibraries>
+  <libraries>
+    <org.jenkinsci.plugins.workflow.libs.LibraryConfiguration>
+      <name>foo</name>
+      <retriever class="com.amadeus.jenkins.plugins.workflow.libs.HttpRetriever">
+        <httpURL>http://example.com/</httpURL>
+        <credentialsId>someCredentials</credentialsId>
+        <preemptiveAuth>true</preemptiveAuth>
+      </retriever>
+      <implicit>false</implicit>
+      <allowVersionOverride>true</allowVersionOverride>
+      <includeInChangesets>true</includeInChangesets>
+    </org.jenkinsci.plugins.workflow.libs.LibraryConfiguration>
+  </libraries>
+</org.jenkinsci.plugins.workflow.libs.GlobalLibraries>
