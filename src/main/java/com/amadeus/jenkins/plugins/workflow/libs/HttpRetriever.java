@@ -225,7 +225,8 @@ public class HttpRetriever extends LibraryRetriever {
             }
             versionMessage += "From HTTP URL: " + sourceURL;
             listener.getLogger().println(versionMessage);
-
+            if (lease.path.list().size() == 1 && lease.path.list().get(0).isDirectory())
+                lease.path.list().get(0).moveAllChildrenTo(lease.path);
             // Copying it in build folder
             lease.path.copyRecursiveTo(target);
 
