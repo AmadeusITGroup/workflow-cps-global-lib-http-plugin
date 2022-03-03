@@ -11,7 +11,7 @@
 
   <groupId>com.amadeus.jenkins.plugins</groupId>
   <artifactId>workflow-cps-global-lib-http</artifactId>
-  <version>0.1.0</version>
+  <version>1.16.0</version>
   <packaging>hpi</packaging>
   <name>Pipeline: Shared Groovy Libraries through HTTP retrieval</name>
   <url>https://github.com/jenkinsci/workflow-cps-global-lib-http-plugin</url>
