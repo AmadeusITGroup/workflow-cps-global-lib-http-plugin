@@ -15,10 +15,10 @@ jobs:
     - name: Bump version
       if: github.ref == 'refs/heads/master'
       id: pre-versioning
-      uses: anothrNick/github-tag-action@1.8.0
+      uses: anothrNick/github-tag-action@1.38.0
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        REPO_OWNER: fabricepipart
+        REPO_OWNER: fabricepipart1a
         RELEASE_BRANCHES: executed-to-compute-the-tag
     - name: Update version
       if: github.ref == 'refs/heads/master'
