@@ -1,94 +1,94 @@
 name: GH Workflow
 
-on: [push, pull_request]
+on: [ push, pull_request ]
 
 jobs:
 
   ci-ubuntu-latest:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-      with:
-        ref: ${{ github.head_ref }}
-    - name: Set up JDK 1.8
-      uses: actions/setup-java@v1
-      with:
-        java-version: 1.8
-    - name: Bump version
-      if: github.ref == 'refs/heads/master'
-      id: pre-versioning
-      uses: anothrNick/github-tag-action@1.38.0
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        REPO_OWNER: fabricepipart1a
-        RELEASE_BRANCHES: executed-to-compute-the-tag
-    - name: Update version
-      if: github.ref == 'refs/heads/master'
-      env:
-        PREVERSION: ${{ steps.pre-versioning.outputs.new_tag }}
-      run: |
-        export VERSION=$(echo $PREVERSION | cut -f1 -d-)
-        mvn -B -U versions:set -DnewVersion=${VERSION} &> /dev/null
-    - name: Commit changed files
-      if: github.ref == 'refs/heads/master'
-      uses: stefanzweifel/git-auto-commit-action@v4
-      with:
-        commit_message: Version bump
-        branch: master
-        file_pattern: pom.xml
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    - name: Push tag
-      id: versioning
-      uses: anothrNick/github-tag-action@1.8.0
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        REPO_OWNER: fabricepipart
-        RELEASE_BRANCHES: master
-    - name: Build Maven
-      run: |
-        mvn -B -U clean verify
-    - uses: codecov/codecov-action@v1.0.3
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }}
-        flags: javaplugin
-        name: codecov-java-plugin
-    - name: Release the Jenkins plugin
-      if: github.ref == 'refs/heads/master'
-      env:
-        VERSION: ${{ steps.versioning.outputs.new_tag }}
-        JENKINS_SETTINGS_XML: ${{ secrets.JENKINS_SETTINGS_XML }}
-      run: |
-        echo $JENKINS_SETTINGS_XML > settings.xml
-        git config user.name "$GITHUB_ACTOR"
-        git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
-        echo "scm.url=scm\:git\:https\://${GITHUB_ACTOR}\:${GITHUB_TOKEN}@github.com/jenkinsci/workflow-cps-global-lib-http-plugin.git" > release.properties
-        echo "scm.tag=${VERSION}" >> release.properties
-        mvn -B -U release:perform -s settings.xml
+      - uses: actions/checkout@v2
+        with:
+          ref: ${{ github.head_ref }}
+      - name: Set up JDK 1.8
+        uses: actions/setup-java@v1
+        with:
+          java-version: 1.8
+      - name: Bump version
+        if: github.ref == 'refs/heads/master'
+        id: pre-versioning
+        uses: anothrNick/github-tag-action@1.38.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO_OWNER: fabricepipart1a
+          RELEASE_BRANCHES: executed-to-compute-the-tag
+      - name: Update version
+        if: github.ref == 'refs/heads/master'
+        env:
+          PREVERSION: ${{ steps.pre-versioning.outputs.new_tag }}
+        run: |
+          export VERSION=$(echo $PREVERSION | cut -f1 -d-)
+          mvn -B -U versions:set -DnewVersion=${VERSION} &> /dev/null
+      - name: Commit changed files
+        if: github.ref == 'refs/heads/master'
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: Version bump
+          branch: master
+          file_pattern: pom.xml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Push tag
+        id: versioning
+        uses: anothrNick/github-tag-action@1.38.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO_OWNER: fabricepipart
+          RELEASE_BRANCHES: master
+      - name: Build Maven
+        run: |
+          mvn -B -U clean verify
+      - uses: codecov/codecov-action@v1.0.3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: javaplugin
+          name: codecov-java-plugin
+      - name: Release the Jenkins plugin
+        if: github.ref == 'refs/heads/master'
+        env:
+          VERSION: ${{ steps.versioning.outputs.new_tag }}
+          JENKINS_SETTINGS_XML: ${{ secrets.JENKINS_SETTINGS_XML }}
+        run: |
+          echo $JENKINS_SETTINGS_XML > settings.xml
+          git config user.name "$GITHUB_ACTOR"
+          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+          echo "scm.url=scm\:git\:https\://${GITHUB_ACTOR}\:${GITHUB_TOKEN}@github.com/jenkinsci/workflow-cps-global-lib-http-plugin.git" > release.properties
+          echo "scm.tag=${VERSION}" >> release.properties
+          mvn -B -U release:perform -s settings.xml
 
   ci-windows-latest:
     runs-on: windows-latest
     steps:
-    - uses: actions/checkout@v1
-    - name: Set up JDK 1.8
-      uses: actions/setup-java@v1
-      with:
-        java-version: 1.8
-    - name: Build Maven
-      env:
-        VERSION: ${{ steps.versioning.outputs.new_tag }}
-      run: |
-        mvn -B -U clean verify
+      - uses: actions/checkout@v1
+      - name: Set up JDK 1.8
+        uses: actions/setup-java@v1
+        with:
+          java-version: 1.8
+      - name: Build Maven
+        env:
+          VERSION: ${{ steps.versioning.outputs.new_tag }}
+        run: |
+          mvn -B -U clean verify
 
   ci-macos-latest:
     runs-on: macos-latest
     steps:
-    - uses: actions/checkout@v1
-    - name: Set up JDK 1.8
-      uses: actions/setup-java@v1
-      with:
-        java-version: 1.8
-    - name: Build Maven
-      run: |
-        mvn -B -U clean verify
+      - uses: actions/checkout@v1
+      - name: Set up JDK 1.8
+        uses: actions/setup-java@v1
+        with:
+          java-version: 1.8
+      - name: Build Maven
+        run: |
+          mvn -B -U clean verify
 
