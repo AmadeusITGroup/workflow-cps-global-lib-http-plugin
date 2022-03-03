@@ -1,18 +1,19 @@
 package com.amadeus.jenkins.plugins.workflow.libs;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import hudson.ExtensionList;
 import io.jenkins.plugins.casc.ConfigurationAsCode;
 import io.jenkins.plugins.casc.ConfiguratorException;
 import io.jenkins.plugins.casc.yaml.YamlSource;
-import java.util.List;
 import org.jenkinsci.plugins.workflow.libs.GlobalLibraries;
 import org.jenkinsci.plugins.workflow.libs.LibraryConfiguration;
 import org.jenkinsci.plugins.workflow.libs.LibraryRetriever;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
+
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class ConfigurationAsCodeTest {
   @Rule
@@ -33,10 +34,7 @@ public class ConfigurationAsCodeTest {
   }
 
   private GlobalLibraries loadConfiguration(String name) throws ConfiguratorException {
-    ConfigurationAsCode.get()
-      .configureWith(
-        new YamlSource<>(
-          ClassLoader.getSystemResourceAsStream(name), YamlSource.READ_FROM_INPUTSTREAM));
+    ConfigurationAsCode.get().configureWith(new YamlSource<>(ClassLoader.getSystemResourceAsStream(name)));
     return ExtensionList.lookupSingleton(GlobalLibraries.class);
   }
 }
