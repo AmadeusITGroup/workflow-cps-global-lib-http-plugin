@@ -104,6 +104,18 @@ public class HttpRetrieverIntegrationTests {
     }
 
     @Test
+    public void acceptsSharedLibEncasedInUpperLevelDirectory() throws Exception {
+        FilePath target = buildJobWithLibrary(
+                "http-lib-retriever-tests-encased-in-upper-directory.zip",
+                "1.2.3"
+        );
+        Assert.assertTrue(target.child("version.txt").exists());
+        Assert.assertTrue(target.child("src").exists());
+        Assert.assertTrue(target.child("vars").exists());
+        Assert.assertTrue(target.child("resources").exists());
+    }
+
+    @Test
     public void acceptsNoVersionsDeclared() throws Exception {
         FilePath target = buildJobWithLibrary(
                 "http-lib-retriever-tests-no-version.zip",
