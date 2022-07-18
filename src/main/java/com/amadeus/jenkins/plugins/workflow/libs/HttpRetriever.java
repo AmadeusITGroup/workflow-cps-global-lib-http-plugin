@@ -226,9 +226,18 @@ public class HttpRetriever extends LibraryRetriever {
       versionMessage += "From HTTP URL: " + sourceURL;
       listener.getLogger().println(versionMessage);
 
+      // check to see if single directory is present, possibly encompassing the whole shared library that is configured
+      if (lease.path.list().size() == 1 && lease.path.list().get(0).isDirectory()) {
+          // perform a final check to make sure the upper level directory isn't just a single dir of a shared library,
+          // (e.g.`src`, `vars`, or `resources`) before moving the child contents into the proper FS location
+          String sharedLibUpperDir = lease.path.list().get(0).getName();
+          if (!sharedLibUpperDir.equals("src") && !sharedLibUpperDir.equals("vars") && !sharedLibUpperDir.equals("resources")) {
+              // move child contents of the encompassing directory
+              lease.path.list().get(0).moveAllChildrenTo(lease.path);
+          }
+      }
       // Copying it in build folder
       lease.path.copyRecursiveTo(target);
-
     }
   }
 
