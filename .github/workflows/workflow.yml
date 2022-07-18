@@ -1,54 +1,50 @@
 name: GH Workflow
 
-on: [ push, pull_request ]
-
+on:
+  pull_request:
+    branches:
+      - "master"
+  push:
+    branches:
+      - "master"
+      
 jobs:
 
   ci-ubuntu-latest:
     runs-on: ubuntu-latest
+    concurrency: 
+      group: ci-${{ github.ref }}
     steps:
       - uses: actions/checkout@v3
-      - name: Set up JDK 1.8
-        uses: actions/setup-java@v1
         with:
-          java-version: 1.8
+          ref: ${{ github.head_ref }}
+      - name: Set up JDK 8
+        uses: actions/setup-java@v3
+        with:
+          java-version: 8
+          distribution: "adopt"
+          cache: 'maven'
       - name: Bump version
         if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
         id: pre-versioning
-        uses: anothrNick/github-tag-action@1.38.0
+        uses: anothrNick/github-tag-action@1.39.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO_OWNER: fabricepipart1a
-          RELEASE_BRANCHES: executed-to-compute-the-tag
-      - name: Update version
-        if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
-        env:
-          PREVERSION: ${{ steps.pre-versioning.outputs.new_tag }}
-        run: |
-          export VERSION=$(echo $PREVERSION | cut -f1 -d-)
-          mvn -B -U versions:set -DnewVersion=${VERSION} &> /dev/null
-      - name: Commit changed files
-        if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
-        uses: stefanzweifel/git-auto-commit-action@v4
-        with:
-          commit_message: Version bump
-          branch: master
-          file_pattern: pom.xml
-
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Push tag
-        if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
-        id: versioning
-        uses: anothrNick/github-tag-action@1.38.0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REPO_OWNER: fabricepipart
           RELEASE_BRANCHES: master
+          DRY_RUN: true
+      - name: Prepare release
+        if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
+        env:
+          VERSION: ${{ steps.pre-versioning.outputs.new_tag }}
+        run: |
+          git config user.name "$GITHUB_ACTOR"
+          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+          mvn -B release:prepare -DskipTests -DreleaseVersion=${VERSION} -Dtag=${VERSION} -DdevelopmentVersion=${VERSION}-SNAPSHOT -Dusername=x-access-token -Dpassword=${{ secrets.RELEASING_PAT }}
       - name: Build Maven
         run: |
           mvn -B -U clean verify
-      - uses: codecov/codecov-action@v1.0.3
+      - uses: codecov/codecov-action@v3.1.0
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: javaplugin
@@ -60,20 +56,18 @@ jobs:
           JENKINS_SETTINGS_XML: ${{ secrets.JENKINS_SETTINGS_XML }}
         run: |
           echo $JENKINS_SETTINGS_XML > settings.xml
-          git config user.name "$GITHUB_ACTOR"
-          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
-          echo "scm.url=scm\:git\:https\://${GITHUB_ACTOR}\:${GITHUB_TOKEN}@github.com/jenkinsci/workflow-cps-global-lib-http-plugin.git" > release.properties
-          echo "scm.tag=${VERSION}" >> release.properties
           mvn -B -U release:perform -s settings.xml
 
   ci-windows-latest:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v1
-      - name: Set up JDK 1.8
-        uses: actions/setup-java@v1
+      - uses: actions/checkout@v3
+      - name: Set up JDK 8
+        uses: actions/setup-java@v3
         with:
-          java-version: 1.8
+          java-version: 8
+          distribution: "adopt"
+          cache: 'maven'
       - name: Build Maven
         env:
           VERSION: ${{ steps.versioning.outputs.new_tag }}
@@ -83,11 +77,13 @@ jobs:
   ci-macos-latest:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v1
-      - name: Set up JDK 1.8
-        uses: actions/setup-java@v1
+      - uses: actions/checkout@v3
+      - name: Set up JDK 8
+        uses: actions/setup-java@v3
         with:
-          java-version: 1.8
+          java-version: 8
+          distribution: "adopt"
+          cache: 'maven'
       - name: Build Maven
         run: |
           mvn -B -U clean verify
