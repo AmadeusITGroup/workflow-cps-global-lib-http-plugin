@@ -6,6 +6,8 @@ jobs:
 
   ci-ubuntu-latest:
     runs-on: ubuntu-latest
+    concurrency: 
+      group: ci-${{ github.workflow }}
     steps:
       - uses: actions/checkout@v2
         with:
