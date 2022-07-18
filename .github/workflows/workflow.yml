@@ -40,7 +40,7 @@ jobs:
         run: |
           git config user.name "$GITHUB_ACTOR"
           git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
-          mvn -B release:prepare -DreleaseVersion=${VERSION} -Dtag=${VERSION} -DdevelopmentVersion=${VERSION}-SNAPSHOT -Dusername=x-access-token -Dpassword=${{ secrets.RELEASING_PAT }}
+          mvn -B release:prepare -DskipTests -DreleaseVersion=${VERSION} -Dtag=${VERSION} -DdevelopmentVersion=${VERSION}-SNAPSHOT -Dusername=x-access-token -Dpassword=${{ secrets.RELEASING_PAT }}
       - name: Build Maven
         run: |
           mvn -B -U clean verify
