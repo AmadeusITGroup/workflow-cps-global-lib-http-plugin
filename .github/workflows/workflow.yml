@@ -33,29 +33,14 @@ jobs:
           REPO_OWNER: fabricepipart1a
           RELEASE_BRANCHES: master
           DRY_RUN: true
-      - name: Update version
+      - name: Prepare release
         if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
         env:
           VERSION: ${{ steps.pre-versioning.outputs.new_tag }}
         run: |
-          mvn -B -U versions:set -DnewVersion=${VERSION} &> /dev/null
-      - name: Commit changed files
-        if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
-        uses: stefanzweifel/git-auto-commit-action@v4
-        with:
-          commit_message: Version bump
-          branch: master
-          file_pattern: pom.xml
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Push tag
-        if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
-        id: versioning
-        uses: anothrNick/github-tag-action@1.38.0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REPO_OWNER: fabricepipart
-          RELEASE_BRANCHES: master
+          git config user.name "$GITHUB_ACTOR"
+          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+          mvn -B release:prepare -DreleaseVersion=${VERSION} -Dtag=${VERSION} -DdevelopmentVersion=${VERSION}-SNAPSHOT -Dusername=x-access-token -Dpassword=${{ secrets.RELEASING_PAT }}
       - name: Build Maven
         run: |
           mvn -B -U clean verify
@@ -71,10 +56,6 @@ jobs:
           JENKINS_SETTINGS_XML: ${{ secrets.JENKINS_SETTINGS_XML }}
         run: |
           echo $JENKINS_SETTINGS_XML > settings.xml
-          git config user.name "$GITHUB_ACTOR"
-          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
-          echo "scm.url=scm\:git\:https\://${GITHUB_ACTOR}\:${GITHUB_TOKEN}@github.com/jenkinsci/workflow-cps-global-lib-http-plugin.git" > release.properties
-          echo "scm.tag=${VERSION}" >> release.properties
           mvn -B -U release:perform -s settings.xml
 
   ci-windows-latest:
