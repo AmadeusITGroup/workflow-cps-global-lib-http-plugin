@@ -23,6 +23,7 @@ jobs:
         with:
           java-version: 8
           distribution: "adopt"
+          cache: 'maven'
       - name: Bump version
         if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
         id: pre-versioning
@@ -85,6 +86,7 @@ jobs:
         with:
           java-version: 8
           distribution: "adopt"
+          cache: 'maven'
       - name: Build Maven
         env:
           VERSION: ${{ steps.versioning.outputs.new_tag }}
@@ -100,6 +102,7 @@ jobs:
         with:
           java-version: 8
           distribution: "adopt"
+          cache: 'maven'
       - name: Build Maven
         run: |
           mvn -B -U clean verify
