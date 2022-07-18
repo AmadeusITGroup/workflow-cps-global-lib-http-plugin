@@ -1,7 +1,13 @@
 name: GH Workflow
 
-on: [ push, pull_request ]
-
+on:
+  pull_request:
+    branches:
+      - "master"
+  push:
+    branches:
+      - "master"
+      
 jobs:
 
   ci-ubuntu-latest:
@@ -23,13 +29,13 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO_OWNER: fabricepipart1a
-          RELEASE_BRANCHES: executed-to-compute-the-tag
+          RELEASE_BRANCHES: master
+          DRY_RUN: true
       - name: Update version
         if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
         env:
-          PREVERSION: ${{ steps.pre-versioning.outputs.new_tag }}
+          VERSION: ${{ steps.pre-versioning.outputs.new_tag }}
         run: |
-          export VERSION=$(echo $PREVERSION | cut -f1 -d-)
           mvn -B -U versions:set -DnewVersion=${VERSION} &> /dev/null
       - name: Commit changed files
         if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
@@ -38,7 +44,6 @@ jobs:
           commit_message: Version bump
           branch: master
           file_pattern: pom.xml
-
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Push tag
