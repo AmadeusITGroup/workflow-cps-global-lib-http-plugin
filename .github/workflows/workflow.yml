@@ -38,7 +38,7 @@ jobs:
         run: |
           git config user.name "$GITHUB_ACTOR"
           git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
-          mvn release:prepare -DreleaseVersion=${VERSION} -DupdateWorkingCopyVersions=false -Dusername=${GITHUB_ACTOR} -Dpassword=${GITHUB_TOKEN}
+          mvn -B release:prepare -DreleaseVersion=${VERSION} -DupdateWorkingCopyVersions=false -Dusername=${GITHUB_ACTOR} -Dpassword=${GITHUB_TOKEN}
       - name: Build Maven
         run: |
           mvn -B -U clean verify
