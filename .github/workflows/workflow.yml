@@ -22,6 +22,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           java-version: 1.8
+          distribution: "adopt"
       - name: Bump version
         if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
         id: pre-versioning
@@ -83,6 +84,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           java-version: 1.8
+          distribution: "adopt"
       - name: Build Maven
         env:
           VERSION: ${{ steps.versioning.outputs.new_tag }}
@@ -97,6 +99,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           java-version: 1.8
+          distribution: "adopt"
       - name: Build Maven
         run: |
           mvn -B -U clean verify
