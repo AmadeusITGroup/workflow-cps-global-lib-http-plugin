@@ -55,11 +55,14 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Collections;
+import java.util.Enumeration;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 import static com.cloudbees.plugins.credentials.CredentialsProvider.USE_ITEM;
 import static com.cloudbees.plugins.credentials.CredentialsProvider.findCredentialById;
@@ -280,6 +283,15 @@ public class HttpRetriever extends LibraryRetriever {
   }
 
   private void unzip(WorkspaceList.Lease lease, FilePath filePath) throws IOException, InterruptedException {
+    try (ZipFile zipFile = new ZipFile(filePath.getRemote())) {
+      Enumeration<? extends ZipEntry> zipEntries = zipFile.entries();
+      while (zipEntries.hasMoreElements()) {
+          String fileName = zipEntries.nextElement().getName();
+          if(fileName != null && fileName.contains("..")){
+            throw new IOException("Unsupported ZIP format that contains relative paths to parent that could cause a security breach");
+          }
+      }
+    }
     filePath.unzip(lease.path);
     // Delete the archive
     filePath.delete();
