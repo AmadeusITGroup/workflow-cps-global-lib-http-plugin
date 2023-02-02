@@ -91,7 +91,7 @@ public class HttpRetrieverTest {
     }
 
     private void createRetriever(String urlToCall, String relativeUrlToServe, int returnForCheck) throws IOException {
-        InputStream archive = Objects.requireNonNull(ClassLoader.getSystemResourceAsStream(RSC_FILE));
+        InputStream archive = Objects.requireNonNull(ClassLoader.getSystemResourceAsStream(relativeUrlToServe));
         wireMock.stubFor(
                 WireMock.head(WireMock.urlMatching(".*" + relativeUrlToServe))
                         .atPriority(2)
@@ -172,8 +172,17 @@ public class HttpRetrieverTest {
     }
 
     @Test
+    public void acceptsSharedLibEncasedInUpperLevelDirectory() throws Exception {
+        createRetriever(getUrl("http-lib-retriever-tests-encased-in-upper-directory.zip"), "http-lib-retriever-tests-encased-in-upper-directory.zip");
+        retriever.retrieve("http-lib-retriever-tests", "1.2.3", target, run, listener);
+        Assert.assertTrue(target.child("src").exists());
+        Assert.assertTrue(target.child("vars").exists());
+        Assert.assertTrue(target.child("resources").exists());
+    }
+
+    @Test
     public void acceptsNoVersionsDeclared() throws Exception {
-        createRetriever(getUrl("http-lib-retriever-tests-no-version.zip"), "/http-lib-retriever-tests-no-version.zip");
+        createRetriever(getUrl("http-lib-retriever-tests-no-version.zip"), "http-lib-retriever-tests-no-version.zip");
         retriever.retrieve("http-lib-retriever-tests", "1.2.3", target, run, listener);
         Assert.assertTrue(target.child("src").exists());
         Assert.assertTrue(target.child("vars").exists());
@@ -182,7 +191,7 @@ public class HttpRetrieverTest {
 
     @Test
     public void replacesVersionInUrl() throws Exception {
-        createRetriever(getUrl("http-lib-retriever-test2-${library.http-lib-retriever-test2.version}.zip"), "/http-lib-retriever-test2-1.2.3.zip");
+        createRetriever(getUrl("http-lib-retriever-test2-${library.http-lib-retriever-test2.version}.zip"), "http-lib-retriever-test2-1.2.3.zip");
         retriever.retrieve("http-lib-retriever-test2", "1.2.3", target, run, listener);
         Assert.assertTrue(target.child("src").exists());
         Assert.assertTrue(target.child("vars").exists());
@@ -242,6 +251,15 @@ public class HttpRetrieverTest {
         createRetriever("http://localhost/does-not-exist.zip", RSC_FILE, HttpURLConnection.HTTP_UNAUTHORIZED);
         FormValidation validation = retriever.validateVersion("library-name", "1.2.3");
         Assert.assertEquals(FormValidation.Kind.WARNING, validation.kind);
+    }
+
+    @Test(expected = IOException.class)
+    public void failsIfContainsRefToParent() throws Exception {
+        createRetriever(getUrl("folder-lib_hack.zip"), "folder-lib_hack.zip");
+        retriever.retrieve("folder-lib_hack", "1.2.3", target, run, listener);
+        Assert.assertTrue(target.child("src").exists());
+        Assert.assertTrue(target.child("vars").exists());
+        Assert.assertTrue(target.child("resources").exists());
     }
 
 
