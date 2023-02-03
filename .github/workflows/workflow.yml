@@ -31,14 +31,6 @@ jobs:
           REPO_OWNER: fabricepipart1a
           RELEASE_BRANCHES: master
           DRY_RUN: true
-      - name: Prepare release
-        if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
-        env:
-          VERSION: ${{ steps.pre-versioning.outputs.new_tag }}
-        run: |
-          git config user.name "$GITHUB_ACTOR"
-          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
-          mvn -B release:prepare -DskipTests -DreleaseVersion=${VERSION} -Dtag=${VERSION} -DdevelopmentVersion=${VERSION}-SNAPSHOT -Dusername=x-access-token -Dpassword=${{ secrets.RELEASING_PAT }}
       - name: Build Maven
         run: |
           mvn -B -U clean verify
@@ -47,14 +39,7 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: javaplugin
           name: codecov-java-plugin
-      - name: Release the Jenkins plugin
-        if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
-        env:
-          VERSION: ${{ steps.versioning.outputs.new_tag }}
-          JENKINS_SETTINGS_XML: ${{ secrets.JENKINS_SETTINGS_XML }}
-        run: |
-          echo $JENKINS_SETTINGS_XML > settings.xml
-          mvn -B -U release:perform -s settings.xml
+
 
   ci-windows-latest:
     runs-on: windows-latest
