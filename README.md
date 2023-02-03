@@ -1,3 +1,9 @@
+---
+
+# This repository should not be used anymore. Please use instead : https://github.com/jenkinsci/workflow-cps-global-lib-http-plugin
+
+---
+
 # HTTP Shared Libraries Retriever plugin
 
 [![Latest tag](https://img.shields.io/github/v/tag/jenkinsci/workflow-cps-global-lib-http-plugin)](https://github.com/jenkinsci/workflow-cps-global-lib-http-plugin/tags)
