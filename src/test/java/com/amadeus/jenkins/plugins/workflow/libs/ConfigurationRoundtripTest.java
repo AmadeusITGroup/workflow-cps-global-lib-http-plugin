@@ -12,6 +12,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.recipes.LocalData;
+import org.xmlunit.assertj.XmlAssert;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -74,17 +75,7 @@ public class ConfigurationRoundtripTest {
         j.configRoundtrip();
         String currentConfig = getConfig();
 
-        String message = "Your config format changed. If it is intentional and necessary:\n";
-        message += " - update this test with new test data that reflects your new data format\n";
-        message += " - create test to make sure that new code can cope with old data format" +
-                " (testConfigurationRoundtripXXX)";
-        message += "\n\n";
-        message += "Old config:\n" + previousConfig;
-        message += "\n\n";
-        message += "New config:\n" + currentConfig;
-        message += "\n\n";
-
-        assertThat(previousConfig).withFailMessage(message).isXmlEqualTo(currentConfig);
+        XmlAssert.assertThat(previousConfig).and(currentConfig).ignoreChildNodesOrder().areSimilar();
     }
 
     private String getConfig() throws IOException {
